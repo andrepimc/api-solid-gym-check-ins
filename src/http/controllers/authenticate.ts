@@ -15,12 +15,19 @@ export async function authenticateController(request: FastifyRequest, reply: Fas
     const usersRepository = new PrismaUsersRepository()
     const authenticateUseCase = new AuthenticateUseCase(usersRepository)
 
-    await authenticateUseCase.execute({ email, password })
+    const { user } = await authenticateUseCase.execute({ email, password })
+
+    const token = await reply.jwtSign({}, {
+      sign: {
+        sub: user.id //sub -> subject
+      }
+    })
+    return reply.status(200).send({ token })
+
 
   } catch (error) {
     if (error instanceof InvalidCredentialsError) {
       return reply.status(400).send({ message: error.message })
     }
   }
-  return reply.status(200).send()
 }
