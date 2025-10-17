@@ -2,7 +2,7 @@ import { app } from "@/app";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import request from 'supertest'
 import { prisma } from "@/lib/prisma";
-import { check } from "zod";
+import { createAndAuthenticateUser } from "@/utils/test/create-and-authenticate-user";
 
 describe("Validate User Check-in e2e", () => {
   beforeAll(async () => {
@@ -12,13 +12,7 @@ describe("Validate User Check-in e2e", () => {
     await app.close()
   })
   it("should be able to validate a user check-in", async () => {
-    await request(app.server).post('/users').send(
-      { name: 'John Doe', email: '8V4ZP@example.com', password: '123456' }
-    )
-    const authResponse = await request(app.server).post('/sessions').send(
-      { email: '8V4ZP@example.com', password: '123456' }
-    )
-    const { token } = authResponse.body
+    const { token } = await createAndAuthenticateUser(app, true)
 
     const user = await prisma.user.findFirstOrThrow()
 

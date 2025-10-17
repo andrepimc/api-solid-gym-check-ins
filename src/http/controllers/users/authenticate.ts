@@ -17,13 +17,33 @@ export async function authenticateController(request: FastifyRequest, reply: Fas
 
     const { user } = await authenticateUseCase.execute({ email, password })
 
-    const token = await reply.jwtSign({}, {
+    const token = await reply.jwtSign({
+      role: user.role
+    }, {
       sign: {
         sub: user.id //sub -> subject
       }
     })
-    return reply.status(200).send({ token })
 
+    const refreshToken = await reply.jwtSign({
+      role: user.role
+    }, {
+      sign: {
+        sub: user.id,
+        expiresIn: '7d'
+        //7 dias (tempo de expiração do refresh token - caso o usuário fique 7 dias ou mais sem acessar a aplicação, perde o login)
+      }
+    })
+
+    return reply
+      .setCookie('refreshToken', refreshToken, {
+        path: '/', //todas as rotas podem ter acesso ao refresh token (cookie)
+        secure: true, //https (encriptado) - frontend não consegue acessar o valor do cookie
+        sameSite: true, //somente acessivel dentro do mesmo dominio
+        httpOnly: true //apenas acessado pelo backend (contexto da requisição)
+      })
+      .status(200)
+      .send({ token })
 
   } catch (error) {
     if (error instanceof InvalidCredentialsError) {

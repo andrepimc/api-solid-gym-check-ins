@@ -4,6 +4,7 @@ import { createController } from "./create";
 import { searchController } from "./search";
 import { nearbyController } from "./nearby";
 import { FastifyInstance } from "fastify";
+import { verifyRole } from "@/http/middleware/verify-role";
 
 async function gymsRoutes(app: FastifyInstance) {
   app.addHook('onRequest', verifyJwt)
@@ -11,7 +12,7 @@ async function gymsRoutes(app: FastifyInstance) {
   app.get('/gyms', searchController)
   app.get('/gyms/nearby', nearbyController)
 
-  app.post('/gyms', createController)
+  app.post('/gyms', { onRequest: verifyRole('ADMIN') }, createController)
 
 }
 
